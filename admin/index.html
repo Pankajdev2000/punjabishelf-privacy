@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PunjabiShelf — Admin Panel</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check-compat.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700;800&family=Noto+Sans+Gurmukhi:wght@400;700&display=swap');
+
+:root {
+  --gold: #B8860B;
+  --gold-light: #E8B84B;
+  --dark: #0D0D0D;
+  --dark2: #141414;
+  --dark3: #1C1C1C;
+  --dark4: #242424;
+  --border: #2C2C2C;
+  --text: #E8E8E8;
+  --muted: #777;
+  --green: #4CAF50;
+  --red: #F44336;
+  --blue: #4285F4;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--dark);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--dark2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  height: 60px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Sans Gurmukhi', sans-serif;
+  font-weight: 700; font-size: 16px; color: #000;
+}
+.header-title { font-size: 16px; font-weight: 700; color: var(--gold-light); }
+.header-sub { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.header-user { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+.btn-signout {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); padding: 5px 12px; border-radius: 8px;
+  font-size: 11px; cursor: pointer; font-family: 'Sora', sans-serif;
+  transition: all 0.2s;
+}
+.btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Login screen ── */
+#loginScreen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(184,134,11,0.08) 0%, transparent 60%);
+}
+.login-card {
+  background: var(--dark2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  width: 380px;
+  text-align: center;
+}
+.login-logo {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Sans Gurmukhi', sans-serif;
+  font-weight: 700; font-size: 26px; color: #000;
+  margin: 0 auto 16px;
+}
+.login-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.login-sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+.login-field {
+  width: 100%; background: var(--dark3);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; color: var(--text);
+  font-family: 'Sora', sans-serif; font-size: 14px;
+  margin-bottom: 12px; outline: none;
+  transition: border-color 0.2s;
+}
+.login-field:focus { border-color: var(--gold); }
+.btn-login {
+  width: 100%; height: 46px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none; border-radius: 10px;
+  color: #000; font-weight: 700; font-size: 15px;
+  cursor: pointer; font-family: 'Sora', sans-serif;
+  transition: all 0.2s;
+}
+.btn-login:hover { filter: brightness(1.1); }
+.login-error { color: var(--red); font-size: 12px; margin-top: 10px; }
+.btn-google {
+  width: 100%; height: 48px;
+  background: white; border: 1.5px solid #ddd;
+  border-radius: 10px; cursor: pointer;
+  font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+  color: #333; display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 14px; transition: all 0.2s;
+}
+.btn-google:hover { border-color: #bbb; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.btn-google:disabled { opacity: 0.5; cursor: not-allowed; }
+.or-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 4px 0 14px; color: var(--muted); font-size: 12px;
+}
+.or-divider::before, .or-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Main layout ── */
+#adminScreen { display: none; }
+.layout { display: flex; min-height: calc(100vh - 60px); }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--dark2);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  position: sticky; top: 60px; height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+.sidebar-section { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 8px 4px; }
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  cursor: pointer; transition: all 0.2s;
+}
+.sidebar-item:hover { background: var(--dark3); color: var(--text); }
+.sidebar-item.active { background: rgba(184,134,11,0.12); color: var(--gold-light); }
+.sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-badge {
+  margin-left: auto; background: var(--gold); color: #000;
+  border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+}
+
+/* ── Main content ── */
+.main { flex: 1; padding: 28px; overflow-y: auto; max-width: 1000px; }
+
+/* ── Panel (tab content) ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Page title ── */
+.page-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.page-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+/* ── Stats row ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+}
+.stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.stat-val { font-size: 28px; font-weight: 800; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── Form card ── */
+.form-card {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+}
+.form-card-title {
+  font-size: 15px; font-weight: 700; margin-bottom: 18px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Form grid ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-full { grid-column: 1 / -1; }
+
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.field-input {
+  background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 13px;
+  color: var(--text); font-family: 'Sora', sans-serif; font-size: 13px;
+  outline: none; transition: border-color 0.2s; width: 100%;
+}
+.field-input:focus { border-color: var(--gold); }
+.field-input.gurmukhi { font-family: 'Noto Sans Gurmukhi', sans-serif; font-size: 14px; }
+textarea.field-input { resize: vertical; min-height: 80px; }
+select.field-input { cursor: pointer; }
+
+/* ── File upload zone ── */
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 24px 16px; text-align: center;
+  cursor: pointer; transition: all 0.2s; position: relative;
+  background: var(--dark3);
+}
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--gold); background: rgba(184,134,11,0.05); }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.upload-sub { font-size: 11px; color: #555; margin-top: 3px; }
+.upload-preview {
+  display: none; margin-top: 12px;
+  background: var(--dark4); border-radius: 8px;
+  padding: 10px 12px; text-align: left;
+  align-items: center; gap: 10px;
+}
+.upload-preview.show { display: flex; }
+.preview-img { width: 40px; height: 54px; object-fit: cover; border-radius: 5px; }
+.preview-name { font-size: 12px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.preview-size { font-size: 11px; color: var(--muted); }
+
+/* ── Progress bar ── */
+.upload-progress { display: none; margin-top: 12px; }
+.upload-progress.show { display: block; }
+.progress-track { height: 6px; background: var(--dark4); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 3px; width: 0%; transition: width 0.3s; }
+.progress-label { font-size: 11px; color: var(--muted); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+
+/* ── Buttons ── */
+.btn-row { display: flex; gap: 12px; margin-top: 20px; align-items: center; }
+.btn-primary {
+  height: 46px; padding: 0 28px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none; border-radius: 12px; color: #000;
+  font-weight: 700; font-size: 14px; cursor: pointer;
+  font-family: 'Sora', sans-serif; transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-secondary {
+  height: 46px; padding: 0 20px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 12px; color: var(--muted);
+  font-weight: 600; font-size: 14px; cursor: pointer;
+  font-family: 'Sora', sans-serif; transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: #555; color: var(--text); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 20px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transform: translateY(80px); opacity: 0;
+  transition: all 0.3s; z-index: 999;
+  display: flex; align-items: center; gap: 10px;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.success { border-color: rgba(76,175,80,0.4); color: #A5D6A7; }
+#toast.error   { border-color: rgba(244,67,54,0.4); color: #EF9A9A; }
+#toast.info    { border-color: rgba(184,134,11,0.4); color: var(--gold-light); }
+
+/* ── Books table ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; padding: 10px 14px;
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  letter-spacing: 1px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td {
+  padding: 12px 14px; font-size: 13px;
+  border-bottom: 1px solid rgba(44,44,44,0.5);
+  vertical-align: middle;
+}
+tr:hover td { background: var(--dark3); }
+.book-cover-thumb { width: 32px; height: 42px; object-fit: cover; border-radius: 5px; }
+.book-cover-placeholder { width: 32px; height: 42px; background: var(--dark4); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-free { background: rgba(76,175,80,0.15); color: #A5D6A7; border: 1px solid rgba(76,175,80,0.3); }
+.badge-premium { background: rgba(184,134,11,0.15); color: var(--gold-light); border: 1px solid rgba(184,134,11,0.3); }
+.badge-pa { background: rgba(255,152,0,0.1); color: #FFB74D; border: 1px solid rgba(255,152,0,0.2); }
+.badge-hi { background: rgba(76,175,80,0.1); color: #A5D6A7; border: 1px solid rgba(76,175,80,0.2); }
+.badge-en { background: rgba(66,133,244,0.1); color: #90CAF9; border: 1px solid rgba(66,133,244,0.2); }
+.btn-del {
+  background: transparent; border: 1px solid rgba(244,67,54,0.2);
+  color: rgba(244,67,54,0.6); border-radius: 8px;
+  padding: 4px 10px; font-size: 11px; cursor: pointer;
+  font-family: 'Sora', sans-serif; transition: all 0.2s;
+}
+.btn-del:hover { background: rgba(244,67,54,0.1); color: var(--red); border-color: var(--red); }
+.table-empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+@media (max-width: 700px) {
+  .sidebar { display: none; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-grid, .form-grid.cols3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN SCREEN ═══════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">ਪ</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">PunjabiShelf — Book Management</div>
+
+    <!-- Google Sign-In (primary method) -->
+    <button class="btn-google" id="googleBtn" onclick="doGoogleLogin()">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="or-divider">OR</div>
+
+    <!-- Email/Password (fallback) -->
+    <input class="login-field" type="email" id="adminEmail" placeholder="Admin email" autocomplete="email"/>
+    <input class="login-field" type="password" id="adminPass" placeholder="Password" autocomplete="current-password"/>
+    <button class="btn-login" onclick="doLogin()">Sign In with Email</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ═══════ ADMIN SCREEN ═══════ -->
+<div id="adminScreen">
+  <div class="header">
+    <div class="header-logo">ਪ</div>
+    <div class="header-title">PunjabiShelf</div>
+    <div class="header-sub">Admin Panel</div>
+    <div class="header-user">
+      <span id="adminEmailDisplay"></span>
+      <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">Library</div>
+      <div class="sidebar-item active" onclick="showPanel('upload')">
+        <span class="sidebar-icon">➕</span> Add Book
+      </div>
+      <div class="sidebar-item" onclick="showPanel('books')">
+        <span class="sidebar-icon">📚</span> All Books
+        <span class="sidebar-badge" id="bookCount">0</span>
+      </div>
+      <div class="sidebar-section">Info</div>
+      <div class="sidebar-item" onclick="showPanel('stats')">
+        <span class="sidebar-icon">📊</span> Stats
+      </div>
+      <div class="sidebar-item" onclick="showPanel('guide')">
+        <span class="sidebar-icon">📖</span> Field Guide
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- ══ PANEL: Upload ══ -->
+      <div class="panel active" id="panel-upload">
+        <div class="page-title">➕ Add New Book</div>
+        <div class="page-sub">Fill the form below — PDF and cover image upload to Firebase Storage automatically</div>
+
+        <!-- Cover + PDF uploads -->
+        <div class="form-card">
+          <div class="form-card-title">📁 Files</div>
+          <div class="form-grid">
+            <!-- Cover -->
+            <div class="field-group">
+              <div class="field-label">Cover Image *</div>
+              <div class="upload-zone" id="coverZone">
+                <input type="file" id="coverFile" accept="image/*" onchange="previewCover(this)"/>
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-label">Click or drag cover image</div>
+                <div class="upload-sub">JPG, PNG, WEBP — max 5MB</div>
+              </div>
+              <div class="upload-preview" id="coverPreview">
+                <img class="preview-img" id="coverThumb" src="" alt="cover"/>
+                <div>
+                  <div class="preview-name" id="coverName"></div>
+                  <div class="preview-size" id="coverSize"></div>
+                </div>
+              </div>
+              <div class="upload-progress" id="coverProgress">
+                <div class="progress-track"><div class="progress-fill" id="coverFill"></div></div>
+                <div class="progress-label" id="coverPct">Uploading cover...</div>
+              </div>
+            </div>
+
+            <!-- PDF -->
+            <div class="field-group">
+              <div class="field-label">PDF File *</div>
+              <div class="upload-zone" id="pdfZone">
+                <input type="file" id="pdfFile" accept="application/pdf" onchange="previewPdf(this)"/>
+                <div class="upload-icon">📄</div>
+                <div class="upload-label">Click or drag PDF file</div>
+                <div class="upload-sub">PDF only — any size</div>
+              </div>
+              <div class="upload-preview" id="pdfPreview">
+                <span style="font-size:28px;">📄</span>
+                <div>
+                  <div class="preview-name" id="pdfName"></div>
+                  <div class="preview-size" id="pdfSize"></div>
+                </div>
+              </div>
+              <div class="upload-progress" id="pdfProgress">
+                <div class="progress-track"><div class="progress-fill" id="pdfFill"></div></div>
+                <div class="progress-label" id="pdfPct">Uploading PDF...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Book details -->
+        <div class="form-card">
+          <div class="form-card-title">📝 Book Details</div>
+          <div class="form-grid">
+            <div class="field-group">
+              <div class="field-label">Title (English) *</div>
+              <input class="field-input" id="fTitle" type="text" placeholder="e.g. Raseedi Ticket"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Title in Gurmukhi *</div>
+              <input class="field-input gurmukhi" id="fTitleG" type="text" placeholder="ਰਸੀਦੀ ਟਿਕਟ"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Author Name *</div>
+              <input class="field-input" id="fAuthor" type="text" placeholder="e.g. Amrita Pritam"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Number of Pages</div>
+              <input class="field-input" id="fPages" type="number" placeholder="312" min="1"/>
+            </div>
+            <div class="field-group form-full">
+              <div class="field-label">Description *</div>
+              <textarea class="field-input" id="fDesc" placeholder="Write a short description of the book..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classification -->
+        <div class="form-card">
+          <div class="form-card-title">🏷️ Classification</div>
+          <div class="form-grid cols3">
+            <div class="field-group">
+              <div class="field-label">Language *</div>
+              <select class="field-input" id="fLang">
+                <option value="punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+                <option value="hindi">हिंदी (Hindi)</option>
+                <option value="english">English</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Category *</div>
+              <select class="field-input" id="fCat">
+                <option>Fiction</option>
+                <option>Folk</option>
+                <option>Religious</option>
+                <option>History</option>
+                <option>Poetry</option>
+                <option>Biography</option>
+                <option>Philosophy</option>
+                <option>Science</option>
+                <option>Law</option>
+                <option>Social</option>
+                <option>Spiritual</option>
+                <option>Reference</option>
+                <option>Children</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Access Type *</div>
+              <select class="field-input" id="fType">
+                <option value="free">🆓 Free</option>
+                <option value="premium">👑 Premium</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hard Copy -->
+        <div class="form-card">
+          <div class="form-card-title">📦 Hard Copy (Physical Book)</div>
+          <div class="form-grid">
+            <div class="field-group">
+              <div class="field-label">Hard Copy Available?</div>
+              <select class="field-input" id="fHardCopy" onchange="toggleHardCopyPrice()">
+                <option value="false">❌ No</option>
+                <option value="true">✅ Yes</option>
+              </select>
+            </div>
+            <div class="field-group" id="hardCopyPriceGroup" style="display:none;">
+              <div class="field-label">Hard Copy Price (₹)</div>
+              <input class="field-input" id="fHardCopyPrice" type="number" placeholder="199" min="0"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="btn-row">
+          <button class="btn-primary" id="submitBtn" onclick="submitBook()">
+            <span>📤</span> Upload Book to App
+          </button>
+          <button class="btn-secondary" onclick="resetForm()">Clear Form</button>
+          <span id="submitStatus" style="font-size:13px;color:var(--muted);"></span>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: Books list ══ -->
+      <div class="panel" id="panel-books">
+        <div class="page-title">📚 All Books</div>
+        <div class="page-sub">Books in your Firebase library — appearing live in the app</div>
+        <div class="form-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cover</th>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Category</th>
+                  <th>Lang</th>
+                  <th>Type</th>
+                  <th>Pages</th>
+                  <th>Reads</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="booksTableBody">
+                <tr><td colspan="9" class="table-empty">Loading books...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: Stats ══ -->
+      <div class="panel" id="panel-stats">
+        <div class="page-title">📊 Library Stats</div>
+        <div class="page-sub">Live numbers from your Firebase</div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total Books</div>
+            <div class="stat-val" id="statTotal" style="color:var(--gold-light)">—</div>
+            <div class="stat-sub">in library</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Free Books</div>
+            <div class="stat-val" id="statFree" style="color:#A5D6A7">—</div>
+            <div class="stat-sub">accessible to all</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Premium Books</div>
+            <div class="stat-val" id="statPremium" style="color:var(--gold-light)">—</div>
+            <div class="stat-sub">subscribers only</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Hard Copy</div>
+            <div class="stat-val" id="statHardCopy" style="color:#90CAF9">—</div>
+            <div class="stat-sub">orderable titles</div>
+          </div>
+        </div>
+        <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="stat-card">
+            <div class="stat-label">Punjabi Books</div>
+            <div class="stat-val" id="statPa" style="color:#FFB74D">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Hindi Books</div>
+            <div class="stat-val" id="statHi" style="color:#A5D6A7">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">English Books</div>
+            <div class="stat-val" id="statEn" style="color:#90CAF9">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: Guide ══ -->
+      <div class="panel" id="panel-guide">
+        <div class="page-title">📖 Field Guide</div>
+        <div class="page-sub">What each field means and tips for filling them correctly</div>
+        <div class="form-card">
+          <div class="form-card-title">📝 Fields Reference</div>
+          <table>
+            <thead><tr><th>Field</th><th>Required</th><th>Tips</th></tr></thead>
+            <tbody>
+              <tr><td><code>Title (English)</code></td><td>✅ Yes</td><td>Use the commonly known name. e.g. "Raseedi Ticket"</td></tr>
+              <tr><td><code>Title Gurmukhi</code></td><td>✅ Yes</td><td>Paste from Google Translate or type in Punjabi keyboard. e.g. ਰਸੀਦੀ ਟਿਕਟ</td></tr>
+              <tr><td><code>Author</code></td><td>✅ Yes</td><td>Full name in English. e.g. "Amrita Pritam"</td></tr>
+              <tr><td><code>Description</code></td><td>✅ Yes</td><td>2–4 sentences about the book. Shown on book detail screen.</td></tr>
+              <tr><td><code>Pages</code></td><td>No</td><td>Count from the PDF. Leave 0 if unknown.</td></tr>
+              <tr><td><code>Language</code></td><td>✅ Yes</td><td>The language the book is written in — not the reader's language.</td></tr>
+              <tr><td><code>Category</code></td><td>✅ Yes</td><td>Pick the closest match. Poetry = kavita, Biography = jeevni etc.</td></tr>
+              <tr><td><code>Type: Free</code></td><td>—</td><td>All users can read without paying. Good for classics & samples.</td></tr>
+              <tr><td><code>Type: Premium</code></td><td>—</td><td>Only ₹29/month subscribers can read. Use for new or popular books.</td></tr>
+              <tr><td><code>Hard Copy</code></td><td>No</td><td>Only enable if you can actually source and ship this book. Premium users only.</td></tr>
+              <tr><td><code>Cover Image</code></td><td>✅ Yes</td><td>JPG/PNG. Try to get the actual book cover. Min 300×400px recommended.</td></tr>
+              <tr><td><code>PDF File</code></td><td>✅ Yes</td><td>Make sure the PDF has proper Gurmukhi fonts embedded, not scanned images (for best reading experience).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">💡 Tips</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;font-size:13px;color:#bbb;">
+            <li>🌐 <strong style="color:white;">Gurmukhi typing:</strong> Use Google Input Tools (translate.google.com) to type Punjabi text, then copy-paste it here.</li>
+            <li>📄 <strong style="color:white;">PDF quality:</strong> Text-based PDFs read much better than scanned image PDFs in the Syncfusion viewer.</li>
+            <li>🖼️ <strong style="color:white;">Cover images:</strong> Search "[book name] book cover" on Google Images. Right-click → Save.</li>
+            <li>🚀 <strong style="color:white;">After upload:</strong> Books appear in the app instantly — no rebuild needed. Pull to refresh in the app.</li>
+            <li>🗑️ <strong style="color:white;">Delete:</strong> Deleting from this panel removes the Firestore document. The PDF/cover in Storage is NOT deleted (to avoid broken links in reading history). Delete manually from Firebase Storage if needed.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /layout -->
+</div><!-- /adminScreen -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// FIREBASE CONFIG — auto-filled from your project
+// ═══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyBlYOIjkyKlimuK_v3aZZctDawvs3LLYg4",
+  authDomain:        "punjabi-shelf-project.firebaseapp.com",
+  projectId:         "punjabi-shelf-project",
+  storageBucket:     "punjabi-shelf-project.firebasestorage.app",
+  messagingSenderId: "597030577521",
+  appId:             "1:597030577521:android:92c8fa7eeee5a5822682d0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db      = firebase.firestore();
+const storage = firebase.storage();
+const auth    = firebase.auth();
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    document.getElementById('adminEmailDisplay').textContent = user.displayName || user.email;
+    loadBooks();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminScreen').style.display = 'none';
+  }
+});
+
+// ── Google Sign-In ────────────────────────────────────────────────────────────
+async function doGoogleLogin() {
+  const btn = document.getElementById('googleBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg> Continue with Google`;
+    if (e.code === 'auth/popup-blocked') {
+      errEl.textContent = '⚠️ Popup was blocked. Please allow popups for this page in your browser and try again.';
+    } else if (e.code === 'auth/unauthorized-domain') {
+      errEl.textContent = '⚠️ This domain is not authorised in Firebase. Open Firebase Console → Authentication → Settings → Authorised domains and add localhost (or your domain).';
+    } else {
+      errEl.textContent = e.message;
+    }
+  }
+}
+
+// ── Email/Password Sign-In (fallback) ────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass  = document.getElementById('adminPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'Enter email and password.'; return; }
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+      errEl.textContent = 'Invalid email or password.';
+    } else {
+      errEl.textContent = e.message;
+    }
+  }
+}
+
+async function doSignOut() {
+  await auth.signOut();
+}
+
+document.getElementById('adminEmail').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('adminPass').focus(); });
+document.getElementById('adminPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ═══════════════════════════════════════════════════════
+// PANEL NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'stats') updateStats();
+}
+
+// ═══════════════════════════════════════════════════════
+// FILE PREVIEWS
+// ═══════════════════════════════════════════════════════
+function previewCover(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('coverThumb').src = e.target.result;
+    document.getElementById('coverName').textContent = file.name;
+    document.getElementById('coverSize').textContent = formatBytes(file.size);
+    document.getElementById('coverPreview').classList.add('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewPdf(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('pdfName').textContent = file.name;
+  document.getElementById('pdfSize').textContent = formatBytes(file.size);
+  document.getElementById('pdfPreview').classList.add('show');
+}
+
+function toggleHardCopyPrice() {
+  const val = document.getElementById('fHardCopy').value;
+  document.getElementById('hardCopyPriceGroup').style.display = val === 'true' ? 'block' : 'none';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// ═══════════════════════════════════════════════════════
+// UPLOAD A FILE TO STORAGE WITH PROGRESS
+// ═══════════════════════════════════════════════════════
+function uploadFile(file, path, fillId, pctId, progressId) {
+  return new Promise((resolve, reject) => {
+    document.getElementById(progressId).classList.add('show');
+    const ref = storage.ref(path);
+    const task = ref.put(file);
+    task.on('state_changed',
+      snap => {
+        const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+        document.getElementById(fillId).style.width = pct + '%';
+        document.getElementById(pctId).textContent = `Uploading... ${pct}%`;
+      },
+      reject,
+      async () => {
+        const url = await task.snapshot.ref.getDownloadURL();
+        document.getElementById(pctId).textContent = '✅ Upload complete';
+        resolve(url);
+      }
+    );
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBMIT BOOK
+// ═══════════════════════════════════════════════════════
+async function submitBook() {
+  const title   = document.getElementById('fTitle').value.trim();
+  const titleG  = document.getElementById('fTitleG').value.trim();
+  const author  = document.getElementById('fAuthor').value.trim();
+  const desc    = document.getElementById('fDesc').value.trim();
+  const pages   = parseInt(document.getElementById('fPages').value) || 0;
+  const lang    = document.getElementById('fLang').value;
+  const cat     = document.getElementById('fCat').value;
+  const type    = document.getElementById('fType').value;
+  const hardCopy = document.getElementById('fHardCopy').value === 'true';
+  const hardCopyPrice = hardCopy ? parseFloat(document.getElementById('fHardCopyPrice').value) || 0 : null;
+  const coverFile = document.getElementById('coverFile').files[0];
+  const pdfFile   = document.getElementById('pdfFile').files[0];
+
+  // Validate
+  if (!title || !author || !desc) { toast('⚠️ Fill in Title, Author and Description', 'error'); return; }
+  if (!coverFile) { toast('⚠️ Please select a cover image', 'error'); return; }
+  if (!pdfFile)   { toast('⚠️ Please select a PDF file', 'error'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Uploading...';
+
+  try {
+    const ts = Date.now();
+    const safeTitle = title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+
+    // Upload cover
+    toast('🖼️ Uploading cover image...', 'info');
+    const coverUrl = await uploadFile(
+      coverFile,
+      `covers/${safeTitle}_${ts}.${coverFile.name.split('.').pop()}`,
+      'coverFill', 'coverPct', 'coverProgress'
+    );
+
+    // Upload PDF
+    toast('📄 Uploading PDF...', 'info');
+    const pdfUrl = await uploadFile(
+      pdfFile,
+      `books/${safeTitle}_${ts}.pdf`,
+      'pdfFill', 'pdfPct', 'pdfProgress'
+    );
+
+    // Write to Firestore
+    toast('💾 Saving to database...', 'info');
+    await db.collection('books').add({
+      title,
+      titleGurmukhi: titleG || title,
+      author,
+      description: desc,
+      coverUrl,
+      pdfUrl,
+      type,
+      language: lang,
+      category: cat,
+      pages,
+      rating: 0.0,
+      totalReads: 0,
+      hasHardCopy: hardCopy,
+      hardCopyPrice: hardCopyPrice,
+      addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    toast('✅ Book added! It\'s live in the app now.', 'success');
+    resetForm();
+    loadBooks();
+
+  } catch(e) {
+    console.error(e);
+    toast('❌ Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>📤</span> Upload Book to App';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// RESET FORM
+// ═══════════════════════════════════════════════════════
+function resetForm() {
+  ['fTitle','fTitleG','fAuthor','fDesc','fPages'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fLang').value = 'punjabi';
+  document.getElementById('fCat').value = 'Fiction';
+  document.getElementById('fType').value = 'free';
+  document.getElementById('fHardCopy').value = 'false';
+  document.getElementById('fHardCopyPrice').value = '';
+  document.getElementById('hardCopyPriceGroup').style.display = 'none';
+  document.getElementById('coverFile').value = '';
+  document.getElementById('pdfFile').value = '';
+  document.getElementById('coverPreview').classList.remove('show');
+  document.getElementById('pdfPreview').classList.remove('show');
+  document.getElementById('coverProgress').classList.remove('show');
+  document.getElementById('pdfProgress').classList.remove('show');
+  document.getElementById('coverFill').style.width = '0%';
+  document.getElementById('pdfFill').style.width = '0%';
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD BOOKS TABLE
+// ═══════════════════════════════════════════════════════
+let allBooks = [];
+
+async function loadBooks() {
+  try {
+    const snap = await db.collection('books').orderBy('addedAt', 'desc').get();
+    allBooks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    document.getElementById('bookCount').textContent = allBooks.length;
+    renderTable();
+    updateStats();
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('booksTableBody');
+  if (allBooks.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="table-empty">📚 No books yet — add your first book!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = allBooks.map(b => `
+    <tr>
+      <td>${b.coverUrl
+        ? `<img class="book-cover-thumb" src="${b.coverUrl}" onerror="this.style.display='none'" loading="lazy"/>`
+        : `<div class="book-cover-placeholder">📚</div>`}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px;">${b.title || '—'}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Noto Sans Gurmukhi',sans-serif;">${b.titleGurmukhi || ''}</div>
+      </td>
+      <td style="color:#bbb;">${b.author || '—'}</td>
+      <td style="color:#bbb;font-size:12px;">${b.category || '—'}</td>
+      <td><span class="badge badge-${b.language === 'punjabi' ? 'pa' : b.language === 'hindi' ? 'hi' : 'en'}">${b.language === 'punjabi' ? 'PA' : b.language === 'hindi' ? 'HI' : 'EN'}</span></td>
+      <td><span class="badge badge-${b.type}">${b.type === 'premium' ? '👑 Premium' : '🆓 Free'}</span></td>
+      <td style="color:#bbb;">${b.pages || '—'}</td>
+      <td style="color:#bbb;">${b.totalReads || 0}</td>
+      <td><button class="btn-del" onclick="deleteBook('${b.id}', '${(b.title||'').replace(/'/g,"\\'")}')">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+async function deleteBook(id, title) {
+  if (!confirm(`Delete "${title}"?\n\nThis removes the book from the app immediately. The PDF/cover files in Storage are NOT deleted.`)) return;
+  try {
+    await db.collection('books').doc(id).delete();
+    toast('🗑️ Book deleted', 'info');
+    loadBooks();
+  } catch(e) {
+    toast('❌ Delete failed: ' + e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
+function updateStats() {
+  const total     = allBooks.length;
+  const free      = allBooks.filter(b => b.type === 'free').length;
+  const premium   = allBooks.filter(b => b.type === 'premium').length;
+  const hardCopy  = allBooks.filter(b => b.hasHardCopy).length;
+  const pa        = allBooks.filter(b => b.language === 'punjabi').length;
+  const hi        = allBooks.filter(b => b.language === 'hindi').length;
+  const en        = allBooks.filter(b => b.language === 'english').length;
+
+  document.getElementById('statTotal').textContent    = total;
+  document.getElementById('statFree').textContent     = free;
+  document.getElementById('statPremium').textContent  = premium;
+  document.getElementById('statHardCopy').textContent = hardCopy;
+  document.getElementById('statPa').textContent = pa;
+  document.getElementById('statHi').textContent = hi;
+  document.getElementById('statEn').textContent = en;
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Drag-over styling
+['coverZone','pdfZone'].forEach(id => {
+  const z = document.getElementById(id);
+  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('dragover'); });
+  z.addEventListener('dragleave', () => z.classList.remove('dragover'));
+  z.addEventListener('drop', () => z.classList.remove('dragover'));
+});
+</script>
+</body>
+</html>
