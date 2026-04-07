@@ -218,10 +218,11 @@ select.cell-input{cursor:pointer}
                 placeholder="https://pub-xxxx.r2.dev/Books"/>
             </div>
             <div style="flex:1;min-width:240px">
-              <div style="font-size:11px;color:#888;margin-bottom:5px;font-weight:600">GROQ API KEY (for AI fill)</div>
-              <input class="r2-url-input" style="width:100%;font-size:12px;padding:9px 12px;border-radius:8px;border:1px solid #E8E0D0;outline:none" id="groqKey"
-                value="....."
-                type="password" placeholder="gsk_..."/>
+              <div style="font-size:11px;color:#888;margin-bottom:5px;font-weight:600">AI PROXY URL (Cloudflare Worker)</div>
+              <input class="r2-url-input" style="width:100%;font-size:12px;padding:9px 12px;border-radius:8px;border:1px solid #E8E0D0;outline:none" id="workerUrl"
+                value="https://punjabishelf-groq.YOUR-SUBDOMAIN.workers.dev"
+                placeholder="https://punjabishelf-groq.your-name.workers.dev"/>
+              <div style="font-size:10px;color:#aaa;margin-top:4px">Your Cloudflare Worker URL — key stays on the server, never in browser</div>
             </div>
           </div>
         </div>
@@ -586,15 +587,12 @@ async function aiSingleRow(id) {
   const r = getRowData(id);
   const fn = r.filename;
   if (!fn) { toast('Enter a filename first', 'err'); return; }
-  const groqKey = document.getElementById('groqKey').value.trim();
-  if (!groqKey) { toast('Enter your Groq API key', 'err'); return; }
-
   const btn = document.getElementById(`ai-${id}`);
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
   setRowStatus(id, 'ai...');
 
   try {
-    const result = await callGroqForBook(fn, groqKey);
+    const result = await callGroqForBook(fn);
     if (result) {
       const ti = document.getElementById(`ti-${id}`);
       const tg = document.getElementById(`tg-${id}`);
@@ -619,8 +617,6 @@ async function aiSingleRow(id) {
 }
 
 async function aiAllRows() {
-  const groqKey = document.getElementById('groqKey').value.trim();
-  if (!groqKey) { toast('Enter your Groq API key', 'err'); return; }
   const btn = document.getElementById('aiAllBtn');
   btn.disabled = true; btn.textContent = '⏳ Filling...';
   for (const r of rows) {
@@ -634,13 +630,16 @@ async function aiAllRows() {
   toast('✅ All rows filled!', 'ok');
 }
 
-async function callGroqForBook(filename, groqKey) {
-  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+async function callGroqForBook(filename) {
+  const workerUrl = document.getElementById('workerUrl').value.trim();
+  if (!workerUrl || workerUrl.includes('YOUR-SUBDOMAIN')) {
+    throw new Error('Set your Cloudflare Worker URL in the config section above');
+  }
+
+  const resp = await fetch(workerUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      max_tokens: 300,
       messages: [{
         role: 'user',
         content: `I have a Punjabi/Hindi/English PDF book file named: "${filename}"
@@ -656,6 +655,12 @@ Extract book information and respond ONLY with valid JSON, no other text:
       }]
     })
   });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Worker error ${resp.status}: ${err}`);
+  }
+
   const data = await resp.json();
   const text = data.choices?.[0]?.message?.content || '';
   const clean = text.replace(/```json|```/g, '').trim();
@@ -813,12 +818,10 @@ async function submitSingleBook() {
 
 async function aiSingleFill() {
   const pdfUrl = document.getElementById('sPdfUrl').value.trim();
-  const groqKey = document.getElementById('groqKey').value.trim();
   if (!pdfUrl) { toast('Enter PDF URL first', 'err'); return; }
-  if (!groqKey) { toast('Enter Groq API key in Bulk panel config', 'err'); return; }
   const filename = pdfUrl.split('/').pop();
   try {
-    const result = await callGroqForBook(filename, groqKey);
+    const result = await callGroqForBook(filename);
     if (result) {
       if (result.title) document.getElementById('sTitle').value = result.title;
       if (result.titleGurmukhi) document.getElementById('sTitleG').value = result.titleGurmukhi;
